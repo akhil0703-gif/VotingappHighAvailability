@@ -3,12 +3,18 @@ region     = "us-central1"
 zone       = "us-central1-a"
 env_suffix = "us-qa-001"
 
+vpc_name = "voting-app-vpc"
+subnet_name = "voting-app-subnet"
+ip_cidr_range = "10.0.0.0/24"
+
+/*
 vpcs = {
     name = "voting-app-vpc"
     subnets = {
       subnet   = { name = "subnet", cidr = "10.0.0.0/24" }
   }
  }
+*/
 
 
 /*
