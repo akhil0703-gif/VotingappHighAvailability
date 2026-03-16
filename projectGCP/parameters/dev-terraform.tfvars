@@ -12,6 +12,7 @@ vpcs = {
       management = { name = "subnet-hub-management", cidr = "10.0.3.0/24" }
     }
   }
+/*
   spoke1 = {
     name = "vpc-spoke1"
     subnets = {
@@ -56,3 +57,4 @@ firewall_rules = {
     ]
   }
 }
+*/
