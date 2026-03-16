@@ -1,4 +1,15 @@
 resource "google_compute_network" "vpc" {
+  name                    = "${var.vpcs.name}
+  auto_create_subnetworks = false
+}
+resource "google_compute_subnetwork" "hub_frontend" {
+  name          = "${var.vpcs.subnets["subnet"].name}
+  ip_cidr_range = var.vpcs.subnets["subnet"].cidr
+  network       = google_compute_network.vpc.id
+}
+
+/*
+resource "google_compute_network" "vpc" {
   name                    = "voting-app-vpc"
   auto_create_subnetworks = false
 }
@@ -9,6 +20,7 @@ resource "google_compute_subnetwork" "subnet" {
   network       = google_compute_network.vpc.name
   ip_cidr_range = "10.0.0.0/24"
 }
+*/
 
 
 /*
