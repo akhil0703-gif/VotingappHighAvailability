@@ -4,14 +4,13 @@ zone       = "us-central1-a"
 env_suffix = "us-qa-001"
 
 vpcs = {
-  hub = {
-    name = "vpc-hub"
+    name = "voting-app-vpc"
     subnets = {
-      frontend   = { name = "subnet-hub-frontend", cidr = "10.0.1.0/24" }
-      backend    = { name = "subnet-hub-backend", cidr = "10.0.2.0/24" }
-      management = { name = "subnet-hub-management", cidr = "10.0.3.0/24" }
-    }
+      subnet   = { name = "subnet", cidr = "10.0.0.0/24" }
   }
+ }
+
+
 /*
   spoke1 = {
     name = "vpc-spoke1"
