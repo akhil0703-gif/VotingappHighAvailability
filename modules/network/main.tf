@@ -1,3 +1,17 @@
+resource "google_compute_network" "vpc" {
+  name                    = "voting-app-vpc"
+  auto_create_subnetworks = false
+}
+
+resource "google_compute_subnetwork" "subnet" {
+  name          = "voting-app-subnet"
+  region        = "us-central1"
+  network       = google_compute_network.vpc.name
+  ip_cidr_range = "10.0.0.0/24"
+}
+
+
+/*
 # HUB VPC & SUBNETS
 resource "google_compute_network" "hub_vpc" {
   name                    = "${var.vpcs["hub"].name}-${var.env_suffix}"
@@ -94,3 +108,4 @@ resource "google_compute_network_peering" "spoke2_to_hub" {
   network      = google_compute_network.spoke2_vpc.id
   peer_network = google_compute_network.hub_vpc.id
 }
+*/
