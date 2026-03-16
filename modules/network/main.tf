@@ -2,7 +2,7 @@ resource "google_compute_network" "vpc" {
   name                    = "${var.vpcs.name}
   auto_create_subnetworks = false
 }
-resource "google_compute_subnetwork" "hub_frontend" {
+resource "google_compute_subnetwork" "vpc_subnet" {
   name          = "${var.vpcs.subnets["subnet"].name}
   ip_cidr_range = var.vpcs.subnets["subnet"].cidr
   network       = google_compute_network.vpc.id
