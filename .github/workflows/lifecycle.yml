@@ -81,12 +81,7 @@ jobs:
         
         # Wait for deployment to succeed (Crucial for testing)
         kubectl rollout status deployment/voting-app
-
-    # 6. Destroy Infrastructure (Explicit Destroy OR Cleanup after full_lifecycle_test)
-   \* - name: Terraform Destroy
-      if: always() && (github.event.inputs.action == 'destroy' || github.event.inputs.action == 'full_lifecycle_test')
-      run: terraform destroy -auto-approve -var-file="parameters/dev-terraform.tfvars" *\
-
+        
        - name: Terraform Destroy
       if: github.event.inputs.action == 'destroy'
       run: terraform destroy -auto-approve -var-file="parameters/dev-terraform.tfvars"
