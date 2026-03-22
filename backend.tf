@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "testproject-488314_cloudbuild"
+    bucket = "gcpterraformstatebucket"
     prefix = "terraform/state/dev"
   }
 }
