@@ -1,4 +1,4 @@
-project_id = "your-gcp-project-id" # UPDATE THIS
+project_id = "testproject-488314" 
 region     = "us-central1"
 zone       = "us-central1-a"
 env        = "dev"
