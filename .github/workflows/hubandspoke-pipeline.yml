@@ -1,76 +1,81 @@
-name: "Deploy Terraform Infrastructure"
+name: GCP Infra and App Lifecycle
 
 on:
   workflow_dispatch:
     inputs:
-      rootFolder:
-        description: 'Path to Terraform root directory'
-        required: true
-        default: './projectGCP' 
-      tfvars:
-        description: 'Path to .tfvars file (relative to rootFolder)'
-        required: true
-        default: 'parameters/dev-terraform.tfvars'
       action:
-        description: 'Terraform action to perform'
+        description: 'Choose lifecycle action:'
         required: true
-        default: 'full-lifecycle-test' 
         type: choice
         options:
-          - validate
-          - fmt
           - plan
           - apply
           - destroy
-          - full-lifecycle-test 
+          - full_lifecycle_test
+
+env:
+  PROJECT_ID: testproject-488314
+  REGION: us-central1
+  ZONE: us-central1-a
+  CLUSTER_NAME: dev-voting-cluster
+  REPO_NAME: dev-voting-app-repo
+  IMAGE_NAME: voting-app
 
 jobs:
-  terraform-gcp-execution:
-    name: "Execute Terraform Task on GCP"
+  execute-lifecycle:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
     steps:
-      - name: "Checkout Code"
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      - name: "Authenticate to Google Cloud"
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: 'projects/257546161875/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-          service_account: 'github-actions-sa@testproject-488314.iam.gserviceaccount.com'
+    # 1. Authenticate to GCP 
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v2
+      with:
+         workload_identity_provider: 'projects/257546161875/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
+         service_account: 'github-actions-sa@testproject-488314.iam.gserviceaccount.com'
 
-      - name: "Setup Terraform"
-        uses: hashicorp/setup-terraform@v3
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
 
-      - name: "Terraform Init"
-        run: terraform init -upgrade
-        working-directory: ${{ github.event.inputs.rootFolder }}
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-      - name: "Run Terraform Format Check"
-        if: ${{ github.event.inputs.action == 'fmt' }}
-        run: terraform fmt -check
-        working-directory: ${{ github.event.inputs.rootFolder }}
+    # 2. Initialize Terraform
+    - name: Terraform Init
+      run: terraform init
 
-      - name: "Run Terraform Validate"
-        if: ${{ github.event.inputs.action == 'validate' || github.event.inputs.action == 'full-lifecycle-test' }}
-        run: terraform validate
-        working-directory: ${{ github.event.inputs.rootFolder }}
+    # 3. Plan (Always run to show what would happen)
+    - name: Terraform Plan
+      if: github.event.inputs.action != 'destroy'
+      run: terraform plan -var-file="parameters/dev-terraform.tfvars"
 
-      - name: "Run Terraform Plan"
-        if: ${{ github.event.inputs.action == 'plan' || github.event.inputs.action == 'full-lifecycle-test' }}
-        run: terraform plan -var-file="${{ github.event.inputs.tfvars }}"
-        working-directory: ${{ github.event.inputs.rootFolder }}
+    # 4. Apply Infrastructure
+    - name: Terraform Apply
+      if: github.event.inputs.action == 'apply' || github.event.inputs.action == 'full_lifecycle_test'
+      run: terraform apply -auto-approve -var-file="parameters/dev-terraform.tfvars"
 
-      - name: "Run Terraform Apply"
-        if: ${{ github.event.inputs.action == 'apply' || github.event.inputs.action == 'full-lifecycle-test' }}
-        run: terraform apply -auto-approve -var-file="${{ github.event.inputs.tfvars }}"
-        working-directory: ${{ github.event.inputs.rootFolder }}
+    # 5. Build, Push, and Deploy Application
+    - name: Deploy Application
+      if: github.event.inputs.action == 'apply' || github.event.inputs.action == 'full_lifecycle_test'
+      run: |
+        gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+        IMAGE_URI="${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+        
+        # Build and Push from the app/ directory
+        docker build -t $IMAGE_URI ./app
+        docker push $IMAGE_URI
 
-      - name: "Run Terraform Destroy"
-        if: ${{ always() && (github.event.inputs.action == 'destroy' || github.event.inputs.action == 'full-lifecycle-test') }}
-        run: terraform destroy -auto-approve -var-file="${{ github.event.inputs.tfvars }}"
-        working-directory: ${{ github.event.inputs.rootFolder }}
+        # Get credentials and deploy
+        gcloud container clusters get-credentials ${{ env.CLUSTER_NAME }} --zone ${{ env.ZONE }}
+        sed -i "s|image: .*|image: $IMAGE_URI|g" k8s/deployment.yaml
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
+        
+        # Wait for deployment to succeed (Crucial for testing)
+        kubectl rollout status deployment/voting-app
+
+    # 6. Destroy Infrastructure (Explicit Destroy OR Cleanup after full_lifecycle_test)
+    - name: Terraform Destroy
+      if: always() && (github.event.inputs.action == 'destroy' || github.event.inputs.action == 'full_lifecycle_test')
+      run: terraform destroy -auto-approve -var-file="parameters/dev-terraform.tfvars"
