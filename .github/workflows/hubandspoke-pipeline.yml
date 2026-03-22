@@ -84,5 +84,6 @@ jobs:
 
     # 6. Destroy Infrastructure (Explicit Destroy OR Cleanup after full_lifecycle_test)
     - name: Terraform Destroy
-      if: always() && (github.event.inputs.action == 'destroy' || github.event.inputs.action == 'full_lifecycle_test')
+      if: always() && (github.event.inputs.action == 'destroy' 
+      #|| github.event.inputs.action == 'full_lifecycle_test')
       run: terraform destroy -auto-approve -var-file="parameters/dev-terraform.tfvars"
