@@ -24,6 +24,11 @@ env:
 jobs:
   execute-lifecycle:
     runs-on: ubuntu-latest
+    
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
