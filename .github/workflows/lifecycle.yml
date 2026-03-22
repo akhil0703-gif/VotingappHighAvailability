@@ -82,6 +82,6 @@ jobs:
         # Wait for deployment to succeed (Crucial for testing)
         kubectl rollout status deployment/voting-app
         
-       - name: Terraform Destroy
-         if: github.event.inputs.action == 'destroy'
-         run: terraform destroy -auto-approve -var-file="parameters/dev-terraform.tfvars"
+    - name: Terraform Destroy
+      if: github.event.inputs.action == 'destroy'
+      run: terraform destroy -auto-approve -var-file="parameters/dev-terraform.tfvars"
