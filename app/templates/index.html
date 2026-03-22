@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Cloud Voting App</title></head>
+<body style="font-family: Arial; padding: 40px;">
+    <h2>Vote: Best Cloud Provider</h2>
+    <form method="POST">
+        {% for option in votes.keys() %}
+            <input type="radio" id="{{ option }}" name="vote" value="{{ option }}" required>
+            <label for="{{ option }}">{{ option }}</label><br><br>
+        {% endfor %}
+        <button type="submit">Submit Vote</button>
+    </form>
+    <h3>Results (Total: {{ total }})</h3>
+    {% for option, count in votes.items() %}
+        <p>{{ option }}: {{ count }}</p>
+    {% endfor %}
+</body>
+</html>
